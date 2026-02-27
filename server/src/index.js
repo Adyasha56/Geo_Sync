@@ -35,14 +35,11 @@ async function bootstrap() {
 
   httpServer.listen(PORT, () => {
     console.log(`
-╔════════════════════════════════════════╗
-║         GeoSync Server Running         ║
-╠════════════════════════════════════════╣
-║  PORT   : ${PORT}                          ║
-║  Redis  : ${redisService.isRedisConnected ? '✓ Connected         ' : '⚠ In-memory fallback'}      ║
-║  Origins: ${ALLOWED_ORIGINS[0].slice(0, 30).padEnd(30)}  ║
-╚════════════════════════════════════════╝
-    `);
+  GeoSync Server Running 
+    PORT   : ${PORT} 
+    Redis  : ${redisService.isRedisConnected ? 'Connected' : 'In-memory fallback'}
+    Origins: ${ALLOWED_ORIGINS[0].slice(0, 30).padEnd(30)}
+  `);
   });
 
   const shutdown = async (signal) => {
