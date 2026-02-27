@@ -52,6 +52,9 @@ export default function Lobby() {
             }
             setSession(joinRes.sessionId, joinRes.role, joinRes.userId);
             setConnectionStatus('connected');
+            if (joinRes.peerConnected) {
+              useStore.getState().setPeerConnected(true);
+            }
           }
         );
       });
@@ -78,6 +81,9 @@ export default function Lobby() {
           setConnectionStatus('connected');
           if (res.lastMapState) {
             useStore.getState().setMapState(res.lastMapState);
+          }
+          if (res.peerConnected) {
+            useStore.getState().setPeerConnected(true);
           }
         }
       );
