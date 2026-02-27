@@ -5,7 +5,7 @@ import { createApp } from './config/app.js';
 import { initializeSocket } from './socket/index.js';
 import redisService from './services/redis.js';
 
-const PORT = parseInt(process.env.PORT || '3001');
+const PORT = parseInt(process.env.PORT || '3000');
 const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
 async function bootstrap() {
@@ -21,7 +21,14 @@ async function bootstrap() {
   // 4. Attach Socket.io to the HTTP server
   const io = new Server(httpServer, {
     cors: {
-      origin: CLIENT_URL,
+      origin: (origin, callback) => {
+        // Allow localhost on any port during development
+        if (!origin || origin.startsWith('http://localhost:')) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },
