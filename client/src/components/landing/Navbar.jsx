@@ -81,9 +81,9 @@ export default function Navbar({ onGetStarted }) {
             color: 'white',
             border: 'none', cursor: 'pointer',
             borderRadius: 999,
-            padding: '9px 22px',
+            padding: '7px 16px',
             fontFamily: "'DM Sans', sans-serif",
-            fontSize: 14, fontWeight: 600,
+            fontSize: 13, fontWeight: 600,
             transition: 'all 0.2s',
             letterSpacing: 0.2,
           }}
@@ -136,8 +136,8 @@ export default function Navbar({ onGetStarted }) {
             marginTop: 16, width: '100%',
             background: '#0a0a0a', color: 'white',
             border: 'none', cursor: 'pointer', borderRadius: 999,
-            padding: '12px', fontFamily: "'DM Sans', sans-serif",
-            fontSize: 15, fontWeight: 600,
+            padding: '10px', fontFamily: "'DM Sans', sans-serif",
+            fontSize: 14, fontWeight: 600,
           }}>
             Get Started
           </button>

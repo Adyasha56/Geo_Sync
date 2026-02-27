@@ -85,7 +85,7 @@ export default function Hero({ onGetStarted }) {
           maxWidth: 560, margin: '0 auto 28px',
           lineHeight: 1.65, fontWeight: 400,
         }}>
-          GeoSync lets one user control a map while others observe in perfect sync —
+          GeoSync lets one user control a map while others observe in perfect sync
           built on WebSockets with real-time coordinate broadcasting.
         </p>
 
