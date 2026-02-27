@@ -2,21 +2,18 @@ import express from 'express';
 import cors from 'cors';
 import redisService from '../services/redis.js';
 
-export function createApp() {
+export function createApp(allowedOrigins) {
   const app = express();
 
-  // ─── Middleware ────────────────────────────────────────────────────────────
   app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
   }));
 
   app.use(express.json());
 
-  // ─── Routes ────────────────────────────────────────────────────────────────
-
-  // Health check — useful for deployment monitoring
+  // Health check — Railway uses this to verify the service is up
   app.get('/health', (req, res) => {
     res.json({
       status: 'ok',
@@ -25,15 +22,10 @@ export function createApp() {
     });
   });
 
-  // Session existence check (REST — so client can validate before socket join)
   app.get('/api/session/:id', async (req, res) => {
     try {
       const session = await redisService.getSession(req.params.id);
-      if (!session) {
-        return res.status(404).json({ exists: false, error: 'Session not found' });
-      }
-
-      // Return non-sensitive session info
+      if (!session) return res.status(404).json({ exists: false, error: 'Session not found' });
       res.json({
         exists: true,
         id: session.id,
@@ -47,10 +39,7 @@ export function createApp() {
     }
   });
 
-  // 404 fallback
-  app.use((req, res) => {
-    res.status(404).json({ error: 'Route not found' });
-  });
+  app.use((req, res) => res.status(404).json({ error: 'Route not found' }));
 
   return app;
 }

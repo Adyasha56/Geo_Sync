@@ -5,77 +5,60 @@ import { createApp } from './config/app.js';
 import { initializeSocket } from './socket/index.js';
 import redisService from './services/redis.js';
 
-const PORT = parseInt(process.env.PORT || '3000');
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
+const PORT = parseInt(process.env.PORT || '3001');
+
+// Allowed origins — in production this will be your Vercel URL
+// Multiple origins supported: set CLIENT_URL as comma-separated values
+// e.g. CLIENT_URL=https://geosync.vercel.app,https://geosync-preview.vercel.app
+const rawOrigins = process.env.CLIENT_URL || 'http://localhost:5173';
+const ALLOWED_ORIGINS = rawOrigins.split(',').map(o => o.trim());
 
 async function bootstrap() {
-  // 1. Connect to Redis (or fall back gracefully)
   await redisService.connect();
 
-  // 2. Create Express app
-  const app = createApp();
-
-  // 3. Create HTTP server (needed to share with Socket.io)
+  const app = createApp(ALLOWED_ORIGINS);
   const httpServer = createServer(app);
 
-  // 4. Attach Socket.io to the HTTP server
   const io = new Server(httpServer, {
     cors: {
-      origin: (origin, callback) => {
-        // Allow localhost on any port during development
-        if (!origin || origin.startsWith('http://localhost:')) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
-      },
+      origin: ALLOWED_ORIGINS,
       methods: ['GET', 'POST'],
       credentials: true,
     },
-    // Socket.io tuning for low latency
-    pingTimeout: 10000,      // 10s before considering connection dead
-    pingInterval: 5000,      // Ping every 5s
-    transports: ['websocket', 'polling'], // Prefer WebSocket, polling as fallback
+    pingTimeout: 10000,
+    pingInterval: 5000,
+    transports: ['websocket', 'polling'],
     upgradeTimeout: 10000,
   });
 
-  // 5. Register all socket handlers
   initializeSocket(io);
 
-  // 6. Start listening
   httpServer.listen(PORT, () => {
     console.log(`
-    GeoSync Server Running
-    HTTP  : http://localhost:${PORT}       
-    WS    : ws://localhost:${PORT}
-    Redis : ${redisService.isRedisConnected ? 'Connected' : 'In-memory fallback'}   `);
+╔════════════════════════════════════════╗
+║         GeoSync Server Running         ║
+╠════════════════════════════════════════╣
+║  PORT   : ${PORT}                          ║
+║  Redis  : ${redisService.isRedisConnected ? '✓ Connected         ' : '⚠ In-memory fallback'}      ║
+║  Origins: ${ALLOWED_ORIGINS[0].slice(0, 30).padEnd(30)}  ║
+╚════════════════════════════════════════╝
+    `);
   });
 
-  //  shutdown 
   const shutdown = async (signal) => {
-    console.log(`\n[Server] ${signal} received — shutting down gracefully...`);
-    
+    console.log(`\n[Server] ${signal} received — shutting down...`);
     httpServer.close(async () => {
       await redisService.store?.quit?.();
-      console.log('Server Shutdown complete.');
+      console.log('[Server] Shutdown complete.');
       process.exit(0);
     });
-
-    // Force exit if graceful shutdown takes too long
     setTimeout(() => process.exit(1), 10_000);
   };
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
-
-  process.on('uncaughtException', (err) => {
-    console.error('[Server] Uncaught Exception:', err);
-    shutdown('uncaughtException');
-  });
-
-  process.on('unhandledRejection', (reason) => {
-    console.error('[Server] Unhandled Rejection:', reason);
-  });
+  process.on('uncaughtException', (err) => { console.error('[Server] Uncaught Exception:', err); shutdown('uncaughtException'); });
+  process.on('unhandledRejection', (reason) => { console.error('[Server] Unhandled Rejection:', reason); });
 }
 
 bootstrap().catch((err) => {

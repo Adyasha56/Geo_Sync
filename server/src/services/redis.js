@@ -7,7 +7,7 @@ class InMemoryStore {
   constructor() {
     this.store = new Map();
     this.timers = new Map();
-    console.warn('[Store] Redis unavailable — using in-memory fallback. Not suitable for multi-instance deployments.');
+    console.warn('[Store] Redis unavailable — using in-memory fallback.');
   }
 
   // Matches ioredis signature: set(key, value, 'EX', ttl)
@@ -21,18 +21,14 @@ class InMemoryStore {
     return 'OK';
   }
 
-  async get(key) {
-    return this.store.get(key) ?? null;
-  }
+  async get(key) { return this.store.get(key) ?? null; }
 
   async del(key) {
     this.timers.delete(key);
     return this.store.delete(key) ? 1 : 0;
   }
 
-  async exists(key) {
-    return this.store.has(key) ? 1 : 0;
-  }
+  async exists(key) { return this.store.has(key) ? 1 : 0; }
 
   async expire(key, ttl) {
     if (!this.store.has(key)) return 0;
@@ -54,16 +50,28 @@ class RedisService {
 
   async connect() {
     try {
-      // ioredis connects automatically on instantiation — no .connect() call needed
-      this.client = new Redis({
-        host: process.env.REDIS_HOST || '127.0.0.1',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
-        password: process.env.REDIS_PASSWORD || undefined,
-        connectTimeout: 3000,
-        maxRetriesPerRequest: 1,
-        retryStrategy: () => null, // Don't keep retrying on startup failure
-        lazyConnect: false,
-      });
+      // REDIS_URL supports:
+      // - redis://...   standard (local/Railway)
+      // - rediss://...  TLS (Upstash — ioredis auto-enables TLS for rediss://)
+      const config = process.env.REDIS_URL
+        ? {
+            // URL string + options
+            url: process.env.REDIS_URL,
+            connectTimeout: 5000,
+            maxRetriesPerRequest: 1,
+            retryStrategy: () => null,
+          }
+        : {
+            // Individual configs (local development)
+            host: process.env.REDIS_HOST || '127.0.0.1',
+            port: parseInt(process.env.REDIS_PORT || '6379'),
+            password: process.env.REDIS_PASSWORD || undefined,
+            connectTimeout: 5000,
+            maxRetriesPerRequest: 1,
+            retryStrategy: () => null,
+          };
+
+      this.client = new Redis(config);
 
       // Test the connection
       await this.client.ping();
@@ -82,17 +90,13 @@ class RedisService {
     }
   }
 
-  // ─── Internal SET helper — always uses EX flag for TTL ───────────────────
   async _set(key, value) {
     if (this.isRedisConnected) {
-      // ioredis syntax: set(key, value, 'EX', seconds)
       await this.client.set(key, value, 'EX', SESSION_TTL);
     } else {
       await this.store.set(key, value, 'EX', SESSION_TTL);
     }
   }
-
-  // ─── Session Operations ───────────────────────────────────────────────────
 
   async createSession(sessionId, data) {
     const key = `session:${sessionId}`;
@@ -111,19 +115,16 @@ class RedisService {
     const existing = await this.getSession(sessionId);
     if (!existing) return null;
     const updated = { ...existing, ...updates, updatedAt: Date.now() };
-    const key = `session:${sessionId}`;
-    await this._set(key, JSON.stringify(updated));
+    await this._set(`session:${sessionId}`, JSON.stringify(updated));
     return updated;
   }
 
   async deleteSession(sessionId) {
-    const key = `session:${sessionId}`;
-    return this.store.del(key);
+    return this.store.del(`session:${sessionId}`);
   }
 
   async sessionExists(sessionId) {
-    const key = `session:${sessionId}`;
-    const result = await this.store.exists(key);
+    const result = await this.store.exists(`session:${sessionId}`);
     return result === 1;
   }
 
@@ -132,6 +133,5 @@ class RedisService {
   }
 }
 
-// Singleton export
 const redisService = new RedisService();
 export default redisService;
