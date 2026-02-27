@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getSocket } from '../lib/socket';
 import { useStore } from '../store/useStore';
 
-export default function Lobby() {
+export default function Lobby({ onBackToLanding }) {
   const { setSession, setConnectionStatus } = useStore();
 
   const [mode, setMode] = useState(null);       // 'create' | 'join'
@@ -101,6 +101,18 @@ export default function Lobby() {
       overflow: 'hidden',
       background: 'var(--white)' 
     }}>
+
+      {/* Background map image */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        pointerEvents: 'none',
+        backgroundImage: 'url(/map.jpg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        opacity: 0.15,
+        filter: 'grayscale(50%)',
+      }} />
 
       {/* Background grid decoration */}
       <div style={{
@@ -403,15 +415,33 @@ export default function Lobby() {
           )}
         </div>
 
-        <p style={{ 
-          textAlign: 'center', 
-          marginTop: '1.25rem', 
-          fontSize: 'clamp(10px, 2.5vw, 12px)',
-          color: 'var(--gray-400)', 
-          fontFamily: 'var(--font-mono)' 
-        }}>
-          GeoSync v1.0 · Built with MapLibre GL + Socket.io
-        </p>
+        <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+          {onBackToLanding && (
+            <button
+              onClick={onBackToLanding}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--purple-600)',
+                fontSize: 'clamp(11px, 2.5vw, 13px)',
+                fontFamily: 'var(--font-sans)',
+                cursor: 'pointer',
+                padding: '0.5rem 1rem',
+                marginBottom: '0.5rem',
+                textDecoration: 'underline',
+              }}
+            >
+              ← Back to Home
+            </button>
+          )}
+          <p style={{ 
+            fontSize: 'clamp(10px, 2.5vw, 12px)',
+            color: 'var(--gray-400)', 
+            fontFamily: 'var(--font-mono)' 
+          }}>
+            GeoSync v1.0 · Built with MapLibre GL + Socket.io
+          </p>
+        </div>
       </div>
     </div>
   );

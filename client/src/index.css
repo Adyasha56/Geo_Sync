@@ -1,7 +1,6 @@
 @import "tailwindcss";
-@import "maplibre-gl/dist/maplibre-gl.css";
 
-/* ── Design Tokens ─────────────────────────────────────── */
+
 :root {
   --purple-950: #0e0520;
   --purple-900: #1a0b38;
@@ -30,7 +29,7 @@
   --glow-purple:   0 0 20px rgba(139, 92, 246, 0.35);
 }
 
-/* ── Base Reset ────────────────────────────────────────── */
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -40,7 +39,6 @@
 html, body, #root {
   height: 100%;
   width: 100%;
-  overflow: hidden;
 }
 
 body {
@@ -50,22 +48,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── MapLibre overrides ─────────────────────────────────── */
-.maplibregl-map {
-  font-family: var(--font-sans) !important;
-}
-
-.maplibregl-ctrl-attrib {
-  font-size: 10px !important;
-  opacity: 0.5;
-}
 
 .maplibregl-ctrl-bottom-right,
 .maplibregl-ctrl-bottom-left {
   display: none;
 }
 
-/* ── Animations ─────────────────────────────────────────── */
 @keyframes pulse-ring {
   0%   { transform: scale(0.9); opacity: 1; }
   100% { transform: scale(1.6); opacity: 0; }
@@ -84,11 +72,6 @@ body {
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-
-@keyframes scan-line {
-  0%   { transform: translateY(-100%); }
-  100% { transform: translateY(400%); }
 }
 
 .animate-slide-up   { animation: slide-up 0.35s ease forwards; }
